@@ -56,13 +56,13 @@ const Signup = {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        console.log(data);
+        const mssg = await res.json();
+        console.log(mssg);
         // Handle successful sign up, e.g., redirect or store token
         router.push("/login");
       } else {
-        const errorData = await res.json();
-        console.error("Sign up failed:", errorData);
+        const errorMssg = await res.json();
+        console.error("SignUp Failed:", errorMssg);
         // Handle sign up error
       }
     },

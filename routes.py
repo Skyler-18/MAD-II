@@ -1,10 +1,10 @@
 from models import db
 from flask import jsonify, render_template, render_template_string, request
-from flask_security import auth_required, current_user, roles_required, SQLAlchemySessionUserDatastore
+from flask_security import auth_required, current_user, roles_required
 from flask_security.utils import hash_password
 
 
-def create_routes(app, user_datastore : SQLAlchemySessionUserDatastore):
+def create_routes(app, user_datastore):
     @app.route('/')
     def home():
         return render_template('index.html')
@@ -53,9 +53,9 @@ def create_routes(app, user_datastore : SQLAlchemySessionUserDatastore):
             """
         )
 
-    @app.route('/sponsor-dashboard')
+    @app.route('/dashboard/sponsor')
     @roles_required('sponsor')
-    def inst_dashboard():
+    def sponsor_dashboard():
         return render_template_string(
             """
                 <h1>this is sponsor dashboard</h1>
@@ -63,9 +63,9 @@ def create_routes(app, user_datastore : SQLAlchemySessionUserDatastore):
             """
         )
 
-    @app.route('/influencer-dashboard')
+    @app.route('/dashboard/influencer')
     @roles_required('influencer')
-    def stud_dashboard():
+    def influencer_dashboard():
         return render_template_string(
             """
                 <h1>this is influencer dashboard</h1>

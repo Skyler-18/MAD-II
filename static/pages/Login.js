@@ -7,7 +7,7 @@ const Login = {
         <h3 class="card-title text-center mb-4">Login</h3>
 
         <div class="form-group mb-3">
-          <input v-model="email" type="email" class="form-control" placeholder="Email" required/>
+          <input v-model="email" type="text" class="form-control" placeholder="Email/Username" required/>
         </div>
 
         <div class="form-group mb-4">
@@ -34,14 +34,16 @@ const Login = {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email: this.email, password: this.password }),
+          credentials: "same-origin",
         });
   
         if (res.ok) {
-            const data = await res.json();
-            console.log(data);
+            const mssg = await res.json();
+            console.log(mssg);
             router.push("/profile");
         } else {
-            console.error("Login Failed");
+            const errorMssg = await res.json();
+            console.error("Login Failed: ", errorMssg);
         }
     },
     },

@@ -4,12 +4,12 @@ const Navbar = {
         <router-link to='/'>Home</router-link>
         <router-link to='/login'>Log In</router-link>
         <router-link to='/signup'>Sign Up</router-link>
-        <a v-bind:href="url">Log Out </a>
+        <a v-bind:href="currUrl">Log Out </a>
     </nav>
     `,
     data() {
         return{
-            url: window.location.origin + "/logout"
+            currUrl: window.location.origin + "/logout"
         };
     },
 };
