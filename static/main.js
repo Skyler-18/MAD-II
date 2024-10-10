@@ -1,5 +1,8 @@
 import Navbar from './components/Navbar.js'
 import router from './utils/router.js'
+import vuexStore from './store/vuex-store.js'
+
+Vue.config.devtools = true;
 
 new Vue({
     el: "#app",
@@ -13,4 +16,5 @@ new Vue({
         Navbar,
     },
     router,
+    store: vuexStore,
 });

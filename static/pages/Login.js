@@ -1,5 +1,3 @@
-import router from "../utils/router.js";
-
 const Login = {
     template:`
     <div class="d-flex justify-content-center align-items-center vh-100">
@@ -27,8 +25,8 @@ const Login = {
   methods: {
     async submitInfo() {
         const origin = window.location.origin;
-        const url = `${origin}/login`;
-        const res = await fetch(url, {
+        // const url = `${origin}/login`;
+        const res = await fetch(origin + "/user-login", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -38,9 +36,36 @@ const Login = {
         });
   
         if (res.ok) {
+            // vuexStore.commit("setLogin");
             const mssg = await res.json();
-            console.log(mssg);
-            router.push("/profile");
+            // console.log(vuexStore.state.loggedIn);
+
+            sessionStorage.setItem("token", mssg.token);
+            sessionStorage.setItem("id", mssg.id);
+            sessionStorage.setItem("email", mssg.email);
+            sessionStorage.setItem("role", mssg.role);
+
+            console.log(sessionStorage.getItem("role"));
+
+            this.$store.commit("setRole", mssg.role);
+            this.$store.commit("setLogin", true);
+
+            switch(mssg.role) {
+              case "admin":
+                this.$router.push("/dashboard/admin");
+                break;
+              case "sponsor":
+                this.$router.push("/dashboard/sponsor");
+                break;
+              case "influencer":
+                this.$router.push("/dashboard/influencer");
+                break;
+            }
+            // else {
+            //   console.error("Login Failed");
+            // }
+            
+            // router.push("/profile");
         } else {
             const errorMssg = await res.json();
             console.error("Login Failed: ", errorMssg);

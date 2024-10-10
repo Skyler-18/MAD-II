@@ -1,9 +1,9 @@
-from app import app
+# from app import app
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, UserMixin, RoleMixin
 from flask_security.models import fsqla_v3
 
-db = SQLAlchemy(app)
+db = SQLAlchemy()
 security = Security()
 
 fsqla_v3.FsModels.set_db_info(db)
