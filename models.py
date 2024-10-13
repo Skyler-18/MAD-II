@@ -13,7 +13,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String, nullable=False, unique=True)
     email = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
-    active = db.Column(db.Boolean, default=True)
+    active = db.Column(db.Boolean, default=False)
     fs_uniquifier = db.Column(db.String(), nullable=False)
     roles = db.relationship('Role', secondary='user_roles')
     # Sponsore Details

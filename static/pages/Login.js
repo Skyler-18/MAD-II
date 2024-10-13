@@ -34,18 +34,22 @@ const Login = {
           body: JSON.stringify({ email: this.email, password: this.password }),
           credentials: "same-origin",
         });
+
+        // console.log(this.email);
   
         if (res.ok) {
             // vuexStore.commit("setLogin");
             const mssg = await res.json();
+            // console.log(mssg);
             // console.log(vuexStore.state.loggedIn);
 
             sessionStorage.setItem("token", mssg.token);
             sessionStorage.setItem("id", mssg.id);
             sessionStorage.setItem("email", mssg.email);
             sessionStorage.setItem("role", mssg.role);
+            // console.log(mssg.email);
 
-            console.log(sessionStorage.getItem("role"));
+            // console.log(sessionStorage.getItem("role"));
 
             this.$store.commit("setRole", mssg.role);
             this.$store.commit("setLogin", true);

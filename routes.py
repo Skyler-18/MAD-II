@@ -15,16 +15,19 @@ def create_routes(app, user_datastore):
         email = data.get('email')
         password = data.get('password')
 
+        # print(email, password)
         if not email or not password:
             return jsonify({'message': 'email or password absent'}), 400
         
         user = user_datastore.find_user(email=email)
 
+        # print(user.email, user.password)
+
         if not user:
             return jsonify({'message': 'invalid user'}), 400
         
         if verify_password(password, user.password):
-            return jsonify({'token': user.get_auth_token(), 'user': user.email, 'role': user.roles[0].name}), 200
+            return jsonify({'token': user.get_auth_token(), 'email': user.email, 'role': user.roles[0].name, 'id': user.id}), 200
         else:
             return jsonify({'message': 'invalid password'}), 400
 
@@ -91,3 +94,40 @@ def create_routes(app, user_datastore):
                 <p>This should only be accessable to influencer</p>
             """
         )
+    
+    @roles_required('admin')
+    @app.route('/approve-sponsor/<id>')
+    @auth_required('token', 'session')
+    def approve_sponsor(id):
+        user = user_datastore.find_user(id=id)
+        
+        if not user:
+            return jsonify({'message': 'Sponsor already approved'}), 400
+        
+        user.active = True
+        db.session.commit()
+        return jsonify({'message': 'Sponsor is approved'}), 200
+    
+    @roles_required('admin')
+    @app.route('/unapproved-sponsors', methods=['GET'])
+    @auth_required('token', 'session')
+    def get_unapproved_sponsors():
+        sponsors = user_datastore.user_model().query.all()
+
+        if not sponsors:
+            return jsonify([
+                {
+                    'id': 'nothing',
+                }
+            ]), 200
+
+        unapproved_sponsors = [sponsor for sponsor in sponsors if not sponsor.active and any(role.name=='sponsor' for role in sponsor.roles)]
+
+        results = [
+            {
+                'id': sponsor.id,
+                'email': sponsor.email,
+            }
+            for sponsor in unapproved_sponsors
+        ]
+        return jsonify(results), 200
