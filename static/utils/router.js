@@ -7,6 +7,7 @@ import SponsorDashboard from '../pages/SponsorDashboard.js'
 import InfluencerDashboard from '../pages/InfluencerDashboard.js'
 import AdminDashboard from '../pages/AdminDashboard.js'
 import Invalid from '../components/Invalid.js'
+import AddCampaign from '../pages/AddCampaign.js'
 
 import vuexStore from '../store/vuex-store.js'
 
@@ -20,7 +21,10 @@ const routes = [
     {path: '/logout', component: Logout},
 
     {path: "/dashboard/admin", component: AdminDashboard, meta: {requiresLogin: true, role: "admin"},},
+
     {path: "/dashboard/sponsor", component: SponsorDashboard, meta: {requiresLogin: true, role: "sponsor"},},
+    {path: "/campaign/add", component: AddCampaign, meta: {requiresLogin: true, role: "sponsor"},},
+
     {path: "/dashboard/influencer", component: InfluencerDashboard, meta: {requiresLogin: true, role: "influencer"},},
 
     {path: '/profile', component: Profile, meta: {requiresLogin: true}},

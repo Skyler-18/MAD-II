@@ -9,18 +9,10 @@ const Campaigns = {
           <div class="card-footer text-muted text-end">
             <small>Created by: {{ budget }}</small>
           </div>
-        </div>
-        <div v-if="showPopup" class=" popup-overlay d-flex align-items-center justify-content-center">
-        <div class="popup-content card shadow p-4">
-          <h3 class="card-title text-center mb-3 text-primary">{{ name }}</h3>
-          <p class="card-text text-secondary">{{ description }}</p>
-          <div class="text-muted text-end mt-3">
-            <small>Created by: {{ start_date }}</small>
-          </div>
+
           <button v-show="approvalRequired" class="btn btn-success mt-3" @click="sendApproval">Approve</button>
           <button class="btn btn-secondary  mt-3" @click="closePopup">Close</button>
         </div>
-      </div>
       </div>
     `,
     props: {
@@ -48,18 +40,18 @@ const Campaigns = {
         type: String,
       },
     },
-    data() {
-      return {
-        showPopup: false,
-      };
-    },
+    // data() {
+    //   return {
+    //     showPopup: false,
+    //   };
+    // },
     methods: {
-      openPopup() {
-        this.showPopup = true;
-      },
-      closePopup() {
-        this.showPopup = false;
-      },
+      // openPopup() {
+      //   this.showPopup = true;
+      // },
+      // closePopup() {
+      //   this.showPopup = false;
+      // },
       async sendApproval() {
         // send fetch request to approval backend
         console.log("sending Approval");

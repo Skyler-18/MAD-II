@@ -58,12 +58,19 @@ class CampaignResource(Resource):
     
     @auth_required('token', 'session')
     def post(self):
+        # print("Headers received:", request.headers)
+        # print("Request data:", request.get_json()) 
         # data = request.get_json()
         args = campaign_parser.parse_args()
+
+        # print("Checkpoint0")
         start_date = datetime.strptime(args['start_date'], '%Y-%m-%d').date()
         end_date = datetime.strptime(args['end_date'], '%Y-%m-%d').date()
         # campaign = Campaign(**args)
+
+        # print("Checkpoint1")
         sponsor = User.query.get(args['sponsor_id'])
+        # print("Checkpoint2")
         if not sponsor:
             return {'message': 'Invalid Sponsor ID'}, 400
         
@@ -77,9 +84,48 @@ class CampaignResource(Resource):
             sponsor_id = args['sponsor_id'],
             goals=args['goals']
         )
+
+        # print("Checkpoint3")
         db.session.add(campaign)
         db.session.commit()
         return {'message': 'Campaign created'}, 200
+    
+    @auth_required('token', 'session')
+    def delete(self, id):
+        campaign = Campaign.query.get(id)
+        if not campaign:
+            return {'message': 'Campaign not found'}, 404
+
+        db.session.delete(campaign)
+        db.session.commit()
+        return {'message': 'Campaign deleted'}, 200
+    
+
+    @auth_required('token', 'session')
+    def put(self, id):
+        args = campaign_parser.parse_args()
+        start_date = datetime.strptime(args['start_date'], '%Y-%m-%d').date()
+        end_date = datetime.strptime(args['end_date'], '%Y-%m-%d').date()
+
+        campaign = Campaign.query.get(id)
+        if not campaign:
+            return {'message': 'Campaign not found'}, 404
+
+        campaign.name = args['name']
+        campaign.description = args['description']
+        campaign.start_date = start_date
+        campaign.end_date = end_date
+        campaign.budget = args['budget']
+        campaign.visibility = args['visibility']
+        campaign.sponsor_id = args['sponsor_id']
+        campaign.goals = args['goals']
+
+        db.session.commit()
+        return {'message': 'Campaign updated'}, 200
+    
+
+# api.add_resource(CampaignResource, '/campaigns')
+api.add_resource(CampaignResource, '/campaigns', '/campaigns/<int:id>')
     
 
 class AdRequestResource(Resource):
@@ -106,6 +152,5 @@ class AdRequestResource(Resource):
         db.session.commit()
         return {'message' : 'Ad-Request created'}, 200
         
-    
-api.add_resource(CampaignResource, '/campaigns')
+
 api.add_resource(AdRequestResource, '/ad-requests')

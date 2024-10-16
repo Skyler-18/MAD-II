@@ -1,4 +1,10 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
-    background: linear-gradient(to right, #7dcf3d, #3bd5e6);
-    /* background-color: rgb(99, 250, 127); */
+    /* background: linear-gradient(to right, #7dcf3d, #3bd5e6); */
+    background-color: #F4EEFF;
   }

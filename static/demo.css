@@ -1,0 +1,25 @@
+.login-card {
+    max-width: 400px;
+    width: 100%;
+    background-color: #A6B1E1;
+}
+.form-label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+.form-control {
+    margin-bottom: 0rem;
+}
+.btn-primary {
+    background-color: #d6deff;
+    border-color: #D9D9D9;
+    transition: background-color 0.3s, transform 0.3s;
+}
+.btn-primary:hover {
+    background-color: #606c9c;
+    transform: translateY(-2px);
+}
+.btn-primary:focus {
+    box-shadow: none;
+}
