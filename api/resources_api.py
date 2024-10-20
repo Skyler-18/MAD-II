@@ -45,16 +45,23 @@ campaign_fields = {
     'budget': fields.Float,
     'visibility': fields.String,
     'sponsor_id': fields.Integer,
+    'goals': fields.String,
     'ad_requests': fields.List(fields.Nested(ad_request_fields))
 }
 
 class CampaignResource(Resource):
     @auth_required('token', 'session')
     @marshal_with(campaign_fields)
-    def get(self):
-        campaigns = Campaign.query.all()
-        # print(type(campaigns))
-        return campaigns
+    def get(self, id=None):
+        if id:
+            campaign = Campaign.query.get(id)
+            if not campaign:
+                return {'message': 'Campaign not found'}, 404
+            return campaign
+        else:
+            campaigns = Campaign.query.all()
+            # print(type(campaigns))
+            return campaigns
     
     @auth_required('token', 'session')
     def post(self):

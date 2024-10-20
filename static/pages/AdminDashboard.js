@@ -18,7 +18,7 @@ const AdminDashboard = {
             const res = await fetch(window.location.origin + "/approve-sponsor/" + id
                 , {
                 headers: {
-                    'Authentication-Token': sessionStorage.getItem("token"),
+                    'Authentication-Token': localStorage.getItem("token"),
                 },
             }
         );
@@ -34,7 +34,7 @@ const AdminDashboard = {
         const res = await fetch(window.location.origin + "/unapproved-sponsors"
             , {
             headers: {
-                'Authentication-Token': sessionStorage.getItem("token"),
+                'Authentication-Token': localStorage.getItem("token"),
             },
         }
     );

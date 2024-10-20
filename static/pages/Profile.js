@@ -6,9 +6,9 @@ const Profile = {
     `,
     data() {
         return {
-            email: sessionStorage.getItem("email"),
-            role: sessionStorage.getItem("role"),
-            id: sessionStorage.getItem("id"),
+            email: localStorage.getItem("email"),
+            role: localStorage.getItem("role"),
+            id: localStorage.getItem("id"),
         };
     },
 };

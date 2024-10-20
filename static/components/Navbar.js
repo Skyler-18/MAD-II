@@ -5,17 +5,22 @@ const Navbar = {
         <div class="navbar-links">
             <router-link v-if="!state.isLoggedIn" to='/login' class="nav-button">Log In</router-link>
             <router-link v-if="!state.isLoggedIn" to='/signup' class="nav-button">Sign Up</router-link>
-            <router-link v-if="state.isLoggedIn && state.role === 'admin'" to='/dashboard/admin' class="nav-link">Admin Dashboard</router-link>
-            <router-link v-if="state.isLoggedIn && state.role === 'sponsor'" to='/dashboard/sponsor' class="nav-link">Sponsor Dashboard</router-link>
-            <router-link v-if="state.isLoggedIn && state.role === 'influencer'" to='/dashboard/influencer' class="nav-link">Influencer Dashboard</router-link>
-            <router-link v-if="state.isLoggedIn" to='/profile' class="nav-link">Profile</router-link>
+
+            <router-link v-if="state.isLoggedIn && state.role === 'admin'" to='/dashboard/admin' class="nav-link">Dashboard</router-link>
+            <router-link v-if="state.isLoggedIn && state.role === 'sponsor'" to='/dashboard/sponsor' class="nav-link">Dashboard</router-link>
+            <router-link v-if="state.isLoggedIn && state.role === 'influencer'" to='/dashboard/influencer' class="nav-link">Dashboard</router-link>
+
+            <router-link v-if="state.isLoggedIn" to='/profile' class="nav-link">
+                <img src="/static/images/profile.png" alt="Profile" class="profile-icon">
+            </router-link>
+
             <button class="btn-logout" v-if="state.isLoggedIn" @click="logout">LogOut</button>
         </div>
     </nav>
     `,
     methods: {
         logout() {
-            sessionStorage.clear();
+            localStorage.clear();
             this.$store.commit("setLogout");
             this.$store.commit("setRole", null);
             this.$router.push("/");
@@ -44,6 +49,10 @@ const Navbar = {
             color: #333;
             text-decoration: none;
         }
+        .navbar-brand:hover {
+            color: #A0522D; /* Dark brown color for hover text */
+            text-decoration: none;
+        }
         .navbar-links {
             display: flex;
             align-items: center;
@@ -54,7 +63,8 @@ const Navbar = {
             color: #333;
             text-decoration: none;
             border-radius: 4px;
-            font-size: 1.2rem; /* Increased font size */
+            font-size: 1rem; /* Increased font size */
+            transition: font-size 0.3s ease; /* Smooth transition for font size */
         }
         .nav-button {
             background-color: #D6CFFF; /* Darker than F4EEFF */
@@ -68,7 +78,9 @@ const Navbar = {
             text-decoration: none;
         }
         .nav-link:hover {
+            color: #A0522D; /* Dark brown color for hover text */
             text-decoration: none; /* Remove underline on hover */
+            font-size: 1.1rem; /* Increase font size on hover */
         }
         .btn-logout {
             margin-left: 1rem;
@@ -85,11 +97,14 @@ const Navbar = {
             background-color: #E0A800; /* Darker shade for hover effect */
             transform: translateY(-2px);
         }
-        .navbar-hr {
-            width: 100%;
-            border: none;
-            border-bottom: 1px solid #ccc;
-            margin: 0;
+        .profile-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            transition: transform 0.3s; /* Add a transition for a smooth effect */
+        }
+        .nav-link:hover .profile-icon {
+            transform: scale(1.1); /* Slightly enlarge the profile icon on hover */
         }
         `;
         document.head.appendChild(style);

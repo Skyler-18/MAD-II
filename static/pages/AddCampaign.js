@@ -18,7 +18,10 @@ const AddCampaign = {
         <textarea id="budget" v-model="budget" required></textarea><br><br>     
 
         <label for="content">Visibility:</label>        
-        <textarea id="visibility" v-model="visibility" required></textarea><br><br>    
+        <select id="visibility" v-model="visibility" required>
+            <option value='public'>Public</option>
+            <option value='private'>Private</option>
+        </select><br><br>    
 
         <label for="creatorId">Sponsor ID:</label>        
         <input type="integer" id="sponsorID" v-model="sponsor_id" required><br><br>  
@@ -68,7 +71,7 @@ const AddCampaign = {
                 method: "POST",          
                 headers: {            
                     "Content-Type": "application/json",            
-                    "Authentication-Token": sessionStorage.getItem("token"),          
+                    "Authentication-Token": localStorage.getItem("token"),          
                 },          
                 body: JSON.stringify(postData),        
             })          
@@ -82,7 +85,8 @@ const AddCampaign = {
                 return response.json();          
             })          
             .then((data) => {            
-                console.log("Resource added:", data);            
+                console.log("Resource added:", data); 
+                this.$router.push('/dashboard/sponsor');           
                 // Optionally show success message or redirect          
             })          
             .catch((error) => {            
