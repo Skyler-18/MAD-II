@@ -86,7 +86,7 @@ const AddCampaign = {
             })          
             .then((data) => {            
                 console.log("Resource added:", data); 
-                this.$router.push('/dashboard/sponsor');           
+                this.$router.push('/sponsor/campaigns');           
                 // Optionally show success message or redirect          
             })          
             .catch((error) => {            

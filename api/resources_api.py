@@ -20,7 +20,7 @@ campaign_parser.add_argument('goals', type=str)
 
 ad_request_parser = reqparse.RequestParser()
 ad_request_parser.add_argument('campaign_id', type=int, required=True)
-ad_request_parser.add_argument('influencer_id', type=int, required=True)
+ad_request_parser.add_argument('influencer_id', type=int, required=False)
 ad_request_parser.add_argument('message', type=str)
 ad_request_parser.add_argument('requirements', type=str, required=True)
 ad_request_parser.add_argument('payment_amount', type=float, required=True)
@@ -138,9 +138,16 @@ api.add_resource(CampaignResource, '/campaigns', '/campaigns/<int:id>')
 class AdRequestResource(Resource):
     @auth_required('token', 'session')
     @marshal_with(ad_request_fields)
-    def get(self):
-        ad_requests = AdRequest.query.all()
-        return ad_requests
+    def get(self, id:None):
+        if id:
+            ad_request = AdRequest.query.get(id)
+            if not ad_request:
+                return {'message': 'Ad Request not found'}, 404
+            return ad_request
+        else:
+            ad_requests = AdRequest.query.all()
+            # print(type(campaigns))
+            return ad_requests
     
     @auth_required('token', 'session')
     def post(self):
@@ -150,14 +157,42 @@ class AdRequestResource(Resource):
         if not campaign:
             return {'message': 'Invalid Campaign ID'}, 400
         
-        influencer = User.query.get(args['influencer_id'])
-        if not influencer:
-            return {'message': 'Invalid Influencer ID'}, 400
+        # influencer = User.query.get(args['influencer_id'])
+        # if not influencer:
+        #     return {'message': 'Invalid Influencer ID'}, 400
         
         ad_request = AdRequest(**args)
         db.session.add(ad_request)
         db.session.commit()
         return {'message' : 'Ad-Request created'}, 200
+    
+    @auth_required('token', 'session')
+    def delete(self, id):
+        ad_request = AdRequest.query.get(id)
+        if not ad_request:
+            return {'message': 'Ad Request not found'}, 404
+
+        db.session.delete(ad_request)
+        db.session.commit()
+        return {'message': 'Ad Request deleted'}, 200
+    
+
+    @auth_required('token', 'session')
+    def put(self, id):
+        args = ad_request_parser.parse_args()
+        # start_date = datetime.strptime(args['start_date'], '%Y-%m-%d').date()
+        # end_date = datetime.strptime(args['end_date'], '%Y-%m-%d').date()
+
+        ad_request = AdRequest.query.get(id)
+        if not ad_request:
+            return {'message': 'Ad Request not found'}, 404
+
+        ad_request.message = args['message']
+        ad_request.requirements = args['requirements']
+        ad_request.payment_amount = args['payment_amount']
+
+        db.session.commit()
+        return {'message': 'Ad Request updated'}, 200
         
 
-api.add_resource(AdRequestResource, '/ad-requests')
+api.add_resource(AdRequestResource, '/ad-requests', '/ad-requests/<int:id>')

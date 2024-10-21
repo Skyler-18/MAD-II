@@ -42,7 +42,6 @@ const EditCampaign = {
     async created() {
         // const id = this.$route.params.id;
         const res = await fetch(`${window.location.origin}/api/campaigns/${this.$route.params.id}`, {
-
             headers: {
                 "Authentication-Token": localStorage.getItem("token"),
             },
@@ -90,12 +89,12 @@ const EditCampaign = {
                 }
                 const data = await res.json();
                 console.log("Campaign updated:", data);
-                this.$router.push('/dashboard/sponsor');
+                this.$router.push('/sponsor/campaigns');
             } catch (error) {
                 console.error("Error saving campaign:", error);
             }
         }
-    }
+    },
 };
 
 export default EditCampaign;

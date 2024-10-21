@@ -1,7 +1,7 @@
 import Campaigns from "../components/Campaigns.js";
 import DeleteConfirmation from "../components/DeleteConfirmation.js";
 
-const SponsorDashboard = {
+const CampaignPage = {
     template: `
         <div>
             <div class="d-flex justify-content-center add-campaign-btn">
@@ -252,7 +252,7 @@ const SponsorDashboard = {
 
         addAds(id) {
             console.log("Add ads button is clicked for campaign ID:", id);
-            this.$router.push(`/ads/add/${id}`);
+            this.$router.push(`/${id}/ads/add`);
         },
 
         deleteCampaign() {
@@ -287,4 +287,4 @@ const SponsorDashboard = {
     }
 };
 
-export default SponsorDashboard;
+export default CampaignPage;
