@@ -3,7 +3,7 @@ const DeleteConfirmation = {
         <div class="confirmation" v-if="show">
             <div class="dialog-box">
                 <h2>{{message}}</h2>
-                <button @click="confirm">Okay</button>
+                <button @click="confirm">Delete</button>
                 <button @click="cancel">Cancel</button>
             </div>
         </div>

@@ -4,6 +4,7 @@ const vuexStore = new Vuex.Store({
     state: {
         isLoggedIn: false,
         role: null,
+        // userId: null,
     },
     mutations: {
         setLogin(state, status) {
@@ -12,10 +13,14 @@ const vuexStore = new Vuex.Store({
         setLogout(state) {
             state.isLoggedIn = false;
             state.role = null;
+            state.userId = null;
         },
         setRole(state, role) {
             state.role = role;
         },
+        // setUserId(state, id) {
+        //     state.userId = id;
+        // },
     },
 });
 

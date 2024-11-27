@@ -27,48 +27,49 @@ const EditAd = {
     },
 
     async created() {
-        const res = await fetch(`${window.location.origin}/api/ad-requests/${this.$route.params.id}`, {
+        const adResource = await fetch(`${window.location.origin}/api/ad-requests/${this.$route.params.id}`, {
             headers: {
                 "Authentication-Token": localStorage.getItem("token"),
             },
         });
-        if (res.ok) {
-            const data = await res.json();
-            this.message = data.message;
-            this.requirements = data.requirements;
-            this.payment_amount = data.payment_amount;
-            this.campaign_id = data.campaign_id;
+        if (adResource.ok) {
+            const adDetails = await adResource.json();
+            this.message = adDetails.message;
+            this.requirements = adDetails.requirements;
+            this.payment_amount = adDetails.payment_amount;
+            this.campaign_id = adDetails.campaign_id;
         }
         else {
-            console.error("API ERROR: ", await res.text());
+            const errorText = await adResource.text();
+            console.error("API ERROR: ", errorText);
         }
     },
 
     methods: {
         async saveChanges() {
-            const backendUrl = `${window.location.origin}/api/ad-requests/${this.$route.params.id}`;
-
-            const postData = {
-                message: this.message,
-                requirements: this.requirements,
-                payment_amount: this.payment_amount,
-                campaign_id: this.campaign_id,
-            };
             try {
-                const res = await fetch(backendUrl, {
+                const adResource = await fetch(`${window.location.origin}/api/ad-requests/${this.$route.params.id}`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
                         "Authentication-Token": localStorage.getItem("token"),
                     },
-                    body: JSON.stringify(postData),
+                    body: JSON.stringify({
+                        message: this.message,
+                        requirements: this.requirements,
+                        payment_amount: this.payment_amount,
+                        campaign_id: this.campaign_id,
+                    }),
                 });
-                if (!res.ok) {
-                    throw new Error("Network response was not ok");
+
+                if (!adResource.ok) {
+                    const errorText = await adResource.text();
+                    console.error("Error editing ad:", errorText);
                 }
-                const data = await res.json();
-                console.log("Ad Request Updated:", data);
-                this.$router.push(`/campaign/${this.campaign_id}`);
+
+                const data = await adResource.json();
+                console.log("Ad Edited:", data);
+                this.$router.push(`/sponsor/campaign/${this.campaign_id}`);
             }
             catch(error) {
                 console.error("Error editing ad:", error);

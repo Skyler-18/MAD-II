@@ -1,7 +1,7 @@
 const Campaigns = {
     template: `
       <div>
-        <div class="card shadow-sm p-4 mb-4 study-resource-card" @click="openPopup">
+        <div class="card shadow-sm p-4 mb-4 study-resource-card">
           <div class="card-body">
             <h3 class="card-title text-center mb-3 text-primary text-truncate">{{ name }}</h3>
             <p class="card-text text-secondary text-truncate">{{ description }}</p>
@@ -11,7 +11,7 @@ const Campaigns = {
           </div>
 
           <button v-show="approvalRequired" class="btn btn-success mt-3" @click="sendApproval">Approve</button>
-          <button class="btn btn-secondary  mt-3" @click="closePopup">Close</button>
+          <button class="btn btn-secondary  mt-3">Close</button>
         </div>
       </div>
     `,
@@ -40,18 +40,7 @@ const Campaigns = {
         type: String,
       },
     },
-    // data() {
-    //   return {
-    //     showPopup: false,
-    //   };
-    // },
     methods: {
-      // openPopup() {
-      //   this.showPopup = true;
-      // },
-      // closePopup() {
-      //   this.showPopup = false;
-      // },
       async sendApproval() {
         // send fetch request to approval backend
         console.log("sending Approval");

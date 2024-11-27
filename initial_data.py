@@ -9,16 +9,16 @@ def create(user_datastore:SQLAlchemySessionUserDatastore):
     influencer_role = user_datastore.find_or_create_role(name='influencer', description='Influencer')
 
     # USERS CREATION
-    if not user_datastore.find_user(username="admin"):
-        admin = user_datastore.create_user(username="admin", email="admin@spin.com", password = hash_password("admin"))
+    if not user_datastore.find_user(email="admin@spin.com"):
+        admin = user_datastore.create_user(email="admin@spin.com", password = hash_password("admin"))
         user_datastore.add_role_to_user(admin, admin_role)
 
-    if not user_datastore.find_user(username="sponsor"):
-        sponsor = user_datastore.create_user(username="sponsor", email="sponsor@spin.com", password = hash_password("sponsor"))
+    if not user_datastore.find_user(email="sponsor@spin.com"):
+        sponsor = user_datastore.create_user(email="sponsor@spin.com", password = hash_password("sponsor"))
         user_datastore.add_role_to_user(sponsor, sponsor_role)
 
-    if not user_datastore.find_user(username="influencer"):
-        influencer = user_datastore.create_user(username="influencer", email="influencer@spin.com", password = hash_password("influencer"))
+    if not user_datastore.find_user(email="influencer@spin.com"):
+        influencer = user_datastore.create_user(email="influencer@spin.com", password = hash_password("influencer"))
         user_datastore.add_role_to_user(influencer, influencer_role)
      
     db.session.commit()

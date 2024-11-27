@@ -16,7 +16,7 @@ const Login = {
         </div>
 
         <div class="text-center">
-          <button class="custom-btn-primary" @click="submitInfo">Login</button>
+          <button class="custom-btn-primary" @click="userLogin">Login</button>
         </div>
       </div>
     </div>
@@ -28,25 +28,31 @@ const Login = {
         };
     },
     methods: {
-        async submitInfo() {
-            const origin = window.location.origin;
-            const res = await fetch(origin + "/user-login", {
+        async userLogin() {
+            const login = await fetch(`${window.location.origin}/user-login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email: this.email, password: this.password }),
-                credentials: "same-origin",
+                body: JSON.stringify({ 
+                    email: this.email, 
+                    password: this.password 
+                }),
             });
-            if (res.ok) {
-                const mssg = await res.json();
-                localStorage.setItem("token", mssg.token);
-                localStorage.setItem("id", mssg.id);
-                localStorage.setItem("email", mssg.email);
-                localStorage.setItem("role", mssg.role);
-                this.$store.commit("setRole", mssg.role);
+            if (login.ok) {
+                const user = await login.json();
+                console.log("Login Success: ", user);
+
+                localStorage.setItem("token", user.token);
+                localStorage.setItem("id", user.id);
+                localStorage.setItem("email", user.email);
+                localStorage.setItem("role", user.role);
+
+                this.$store.commit("setRole", user.role);
                 this.$store.commit("setLogin", true);
-                switch(mssg.role) {
+                // this.$store.commit("setUserId", user.id);
+
+                switch(user.role) {
                     case "admin":
                         this.$router.push("/dashboard/admin");
                         break;
@@ -59,8 +65,8 @@ const Login = {
                 }
             }
             else {
-                const errorMssg = await res.json();
-                console.error("Login Failed: ", errorMssg);
+                const errorText = await login.json();
+                console.error("Login Failed: ", errorText);
             }
         },
     },

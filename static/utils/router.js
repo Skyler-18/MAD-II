@@ -3,16 +3,21 @@ import Login from '../pages/Login.js';
 import Signup from '../pages/Signup.js';
 import Logout from '../pages/Logout.js';
 import Profile from '../pages/Profile.js';
-import CampaignPage from '../pages/CampaignPage.js';
-import InfluencerDashboard from '../pages/InfluencerDashboard.js';
-import AdminDashboard from '../pages/AdminDashboard.js'; // Ensure you have this import
+import SponsorCampaignPage from '../pages/Sponsor/SponsorCampaignPage.js';
+import InfluencerDashboard from '../pages/Influencer/InfluencerDashboard.js';
+import AdminDashboard from '../pages/Admin/AdminDashboard.js'; // Ensure you have this import
 import Invalid from '../components/Invalid.js';
 import vuexStore from '../store/vuex-store.js';
-import AddCampaign from '../pages/AddCampaign.js';
-import EditCampaign from '../pages/EditCampaign.js';
-import AddAd from '../pages/AddAd.js';
-import CampaignDetails from '../pages/CampaignDetails.js'
-import EditAd from '../pages/EditAd.js'
+import AddCampaign from '../pages/Sponsor/AddCampaign.js';
+import EditCampaign from '../pages/Sponsor/EditCampaign.js';
+import AddAd from '../pages/Sponsor/AddAd.js';
+import SponsorCampaignDetails from '../pages/Sponsor/SponsorCampaignDetails.js';
+import InfluencerCampaignDetails from '../pages/Influencer/InfluencerCampaignDetails.js';
+import EditAd from '../pages/Sponsor/EditAd.js'
+import InfluencerCampaignPage from '../pages/Influencer/InfluencerCampaignPage.js';
+import SponsorRequests from '../pages/Sponsor/SponsorRequests.js';
+import InfluencerRequests from '../pages/Influencer/InfluencerRequests.js';
+import SearchInfluencers from '../pages/Sponsor/SearchInfluencers.js';
 
 Vue.use(VueRouter);
 
@@ -25,7 +30,9 @@ const routes = [
 
     { path: '/dashboard/admin', component: AdminDashboard, meta: { requiresAuth: true } },
     // { path: '/dashboard/sponsor', component: SponsorDashboard, meta: { requiresAuth: true } },
-    {path: '/sponsor/campaigns', component: CampaignPage, meta: { requiresAuth: true } },
+    // {path: '/sponsor/campaigns', component: CampaignPage, meta: { requiresAuth: true } },
+    { path: '/sponsor/campaigns/:id', component: SponsorCampaignPage, meta: { requiresAuth: true } },
+
     { path: '/dashboard/influencer', component: InfluencerDashboard, meta: { requiresAuth: true } },
     { path: '*', component: Invalid },
 
@@ -33,8 +40,19 @@ const routes = [
     {path: '/campaign/edit/:id', component: EditCampaign, meta: { requiresAuth: true }},
 
     {path: '/:id/ads/add', component: AddAd, meta: { requiresAuth: true }},
-    {path: '/campaign/:id', component: CampaignDetails, meta: { requiresAuth: true }},
+    // {path: '/campaign/:id', component: CampaignDetails, meta: { requiresAuth: true }},
+    {path: '/sponsor/campaign/:id', component: SponsorCampaignDetails, meta: { requiresAuth: true }},
+    {path: '/influencer/campaign/:id', component: InfluencerCampaignDetails, meta: { requiresAuth: true }},
+
+
     {path: '/ad-request/edit/:id', component: EditAd, meta: { requiresAuth: true }},
+
+    {path: '/sponsor/requests', component: SponsorRequests, meta: { requiresAuth: true }},
+    {path: '/influencer/requests', component: InfluencerRequests, meta: { requiresAuth: true }},
+
+    {path: '/:id/search/influencers', component: SearchInfluencers, meta: { requiresAuth: true }},
+
+    {path: '/influencer/campaigns/:id', component: InfluencerCampaignPage, meta: { requiresAuth: true }},
 ];
 
 const router = new VueRouter({

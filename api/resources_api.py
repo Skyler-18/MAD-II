@@ -1,15 +1,17 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import request
-from flask_restful import Resource, Api, fields, reqparse, marshal_with
+import json
+from flask_restful import Resource, Api, fields, marshal, reqparse, marshal_with
 from flask_security import auth_required
-from models import db, Campaign, AdRequest, User
+from models import Requests, db, Campaign, AdRequest, User
+from sqlalchemy.orm import joinedload
 
 api = Api(prefix='/api')
 
 # parser = reqparse.RequestParser()
 
 campaign_parser = reqparse.RequestParser()
-campaign_parser.add_argument('name', type=str, required=True, help="Campaign Name is required")
+campaign_parser.add_argument('name', type=str, required=True)
 campaign_parser.add_argument('description', type=str)
 campaign_parser.add_argument('start_date', type=str, required=True)
 campaign_parser.add_argument('end_date', type=str, required=True)
@@ -20,21 +22,29 @@ campaign_parser.add_argument('goals', type=str)
 
 ad_request_parser = reqparse.RequestParser()
 ad_request_parser.add_argument('campaign_id', type=int, required=True)
-ad_request_parser.add_argument('influencer_id', type=int, required=False)
 ad_request_parser.add_argument('message', type=str)
 ad_request_parser.add_argument('requirements', type=str, required=True)
 ad_request_parser.add_argument('payment_amount', type=float, required=True)
-ad_request_parser.add_argument('status', type=str, default='Pending')
+
+requests_parser = reqparse.RequestParser()
+requests_parser.add_argument('ad_id', type=int, required=True)
+requests_parser.add_argument('influencer_id', type=int, required=True)
+requests_parser.add_argument('created_at', type=str, required=False)
+requests_parser.add_argument('negotiated_amount', type=float, required=False)
+requests_parser.add_argument('status', type=str, default='Pending')
 
 ad_request_fields = {
     'id': fields.Integer,
     'campaign_id': fields.Integer,
-    'influencer_id': fields.Integer,
     'message': fields.String,
     'requirements': fields.String,
     'payment_amount': fields.Float,
-    'status': fields.String
+    'sponsor': fields.String(attribute='campaign.sponsor.name')
 }
+
+class AdRequestsCount(fields.Raw):
+    def format(self, value):
+        return value.count()
 
 campaign_fields = {
     'id': fields.Integer,
@@ -46,22 +56,444 @@ campaign_fields = {
     'visibility': fields.String,
     'sponsor_id': fields.Integer,
     'goals': fields.String,
-    'ad_requests': fields.List(fields.Nested(ad_request_fields))
+    'ad_requests': fields.List(fields.Nested(ad_request_fields)),
+    'ad_request_count': AdRequestsCount(attribute='ad_requests')
 }
+
+# detailed_ad_request_fields = {
+#     **ad_request_fields,
+#     'campaign': {
+#         **campaign_fields,
+#     }
+# }
+
+requests_fields = {
+    'id': fields.Integer,
+    'ad_id': fields.Integer,
+    'influencer_id': fields.Integer,
+    'created_at': fields.String,
+    'negotiated_amount': fields.Float,
+    'status': fields.String
+}
+
+class RoleNameField(fields.Raw): 
+    def format(self, value):
+        if value:
+            return value[0].name
+        return None 
+
+user_fields = { 
+    'id': fields.Integer, 
+    # 'username': fields.String, 
+    'email': fields.String, 
+    'roles': RoleNameField(attribute='roles'), # Custom field to extract role names 
+    'name': fields.String, 
+    # Sponsor
+    'industry': fields.String, 
+    'annual_revenue': fields.Float, 
+    # Influencer
+    'category': fields.String, 
+    'niche': fields.String, 
+    'followers': fields.Integer
+}
+
+class UserResource(Resource):
+    @auth_required('token', 'session')
+    @marshal_with(user_fields)
+    def get(self, id=None):
+        if id:
+            user = User.query.options(joinedload(User.roles)).filter_by(id=id).first()
+            if not user:
+                return {'message': 'User not found'}, 404
+            return user
+        
+        users = User.query.options(db.joinedload(User.roles)).all()
+        return users
+
+
+api.add_resource(UserResource, '/users', '/users/<int:id>')
+
+
+class RequestsTableResource(Resource):
+    @auth_required('token', 'session')
+    def get(self, id):
+        user_type = request.args.get('user_type')  # Get the user type query parameter
+
+        if user_type not in ['influencer', 'sponsor']:
+            return {'message': 'Invalid user type'}, 400
+
+        if user_type == 'influencer':
+            requests = Requests.query.filter_by(influencer_id=id).all()
+        else:  # user_type == 'sponsor'
+            requests = Requests.query.join(AdRequest, Requests.ad_id == AdRequest.id) \
+                                     .join(Campaign, AdRequest.campaign_id == Campaign.id) \
+                                     .filter(Campaign.sponsor_id == id) \
+                                     .all()
+
+        detailed_requests = []
+        for req in requests:
+            ad = req.ad_request
+            campaign = ad.campaign
+            sponsor = campaign.sponsor
+            influencer = req.influencer  # Assuming there's a relationship defined for influencer
+
+            detailed_request = {
+                'id': req.id,
+                'ad_id': req.ad_id,
+                'influencer_id': req.influencer_id,
+                'negotiated_amount': req.negotiated_amount,
+                'status': req.status,
+                'created_at': req.created_at.isoformat() if req.created_at else None,
+                'message': ad.message,
+                'requirements': ad.requirements,
+                'payment_amount': ad.payment_amount,
+                'campaign_id': campaign.id,
+                'campaign_name': campaign.name,
+                'sponsor_id': campaign.sponsor_id,
+            }
+
+            if user_type == 'sponsor':
+                detailed_request.update({
+                    'name': influencer.name,
+                    'category': influencer.category,
+                    'niche': influencer.niche,
+                    'followers': influencer.followers
+                })
+            elif user_type == 'influencer':
+                detailed_request.update({
+                    'name': sponsor.name,
+                    # 'company_name': sponsor.company_name,
+                    'industry': sponsor.industry,
+                    'annual_revenue': sponsor.annual_revenue,
+                })
+
+            detailed_requests.append(detailed_request)
+
+        return detailed_requests, 200
+
+api.add_resource(RequestsTableResource, '/requests-table/<int:id>')
+
+
+
+
+
+    # @auth_required('token', 'session')
+    # def get(self, id):
+    #     # influencer_id = request.args.get('influencer_id')
+
+    #     # Get all requests for the influencer
+    #     requests = Requests.query.filter_by(influencer_id=id).all()
+
+    #     detailed_requests = []
+    #     for req in requests:
+    #         ad = AdRequest.query.get(req.ad_id)
+    #         campaign = Campaign.query.get(ad.campaign_id)
+    #         sponsor = User.query.get(campaign.sponsor_id)
+
+    #         detailed_request = {
+    #             'id': req.id,
+    #             'ad_id': req.ad_id,
+    #             'influencer_id': req.influencer_id,
+    #             'status': req.status,
+    #             'created_at': req.created_at.isoformat() if req.created_at else None,
+    #             'message': ad.message,
+    #             'requirements': ad.requirements,
+    #             'payment_amount': ad.payment_amount,
+    #             'campaign_id': campaign.id,
+    #             'campaign_name': campaign.name,
+    #             'sponsor_id': campaign.sponsor_id,
+    #             'company_name': sponsor.company_name,
+    #             'industry': sponsor.industry,
+    #             'budget': sponsor.budget,
+    #             'username': sponsor.username,
+    #             'category': sponsor.category,
+    #             'niche': sponsor.niche,
+    #             'followers': sponsor.followers
+    #         }
+
+    #         detailed_requests.append(detailed_request)
+
+    #     return detailed_requests, 200
+
+
+
+
+def request_to_dict(req): 
+    return { 
+        'id': req.id, 
+        'ad_id': req.ad_id, 
+        'influencer_id': req.influencer_id, 
+        'status': req.status, # Add other necessary fields here 
+        }
+
+class RequestsResource(Resource):
+    @auth_required('token', 'session')
+    def get(self, id=None):
+        ad_id = request.args.get('ad_id')
+        influencer_id = request.args.get('influencer_id')
+        ad_ids = request.args.getlist('ad_ids')  # For multiple ad_ids
+        influencer_ids = request.args.getlist('influencer_ids')  # For multiple influencer_ids
+
+        print(f"ad_id: {ad_id}, influencer_id: {influencer_id}, ad_ids: {ad_ids}, influencer_ids: {influencer_ids}")
+
+        if id:
+            requests = Requests.query.filter_by(ad_id=id).all()
+            if not request:
+                return {'message': 'Request not found'}, 404
+            # return requests
+            return [request_to_dict(req) for req in requests], 200
+
+        # Case 1: Batch fetch for single ad_id and multiple influencers (SearchInfluencers Page)
+        if ad_id and influencer_ids:
+            requests = Requests.query.filter(
+                Requests.ad_id == ad_id, 
+                Requests.influencer_id.in_(influencer_ids)
+            ).all()
+
+            results = {
+                req.influencer_id: req.status for req in requests
+            }
+            return results, 200
+
+        # Case 2: Batch fetch for single influencer_id and multiple ad_ids (AdRequests Page)
+        if influencer_id and ad_ids:
+            requests = Requests.query.filter(
+                Requests.influencer_id == influencer_id,
+                Requests.ad_id.in_(ad_ids)
+            ).all()
+
+            results = {
+                req.ad_id: req.status for req in requests
+            }
+            return results, 200
+
+        # Fallback: Fetch all requests (default behavior)
+        requests = Requests.query.all()
+        return [marshal(req, requests_fields) for req in requests], 200
+    
+        # requests = Requests.query.all()
+        # return requests
+    
+    # @marshal_with(requests_fields)
+    # def get(self, id=None):
+    #     ad_id = request.args['ad_id']
+    #     influencer_id = request.args['influencer_id']
+
+    #     if id:
+    #         requests = Requests.query.filter_by(ad_id=id).all()
+    #         if not request:
+    #             return {'message': 'Request not found'}, 404
+    #         return requests
+    #     requests = Requests.query.all()
+    #     return requests
+    
+
+    
+    @auth_required('token', 'session')
+    def post(self):
+        args = requests_parser.parse_args()
+        # print(datetime.now())
+        # print("Received POST request with data:", args)
+
+        # try: 
+        #     created_at = datetime.strptime(args['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ') 
+        # except ValueError: 
+        #     created_at = datetime.strptime(args['created_at'], '%Y-%m-%dT%H:%M:%S.%f')
+
+        request = Requests(
+            ad_id=args['ad_id'],
+            influencer_id=args['influencer_id'],
+            created_at=datetime.now(),
+            status=args['status']
+        )
+
+        try:
+            db.session.add(request)
+            db.session.commit()
+            print("everything is fine here")
+            return {'message': 'Request sent'}, 200
+        except Exception as e: 
+            db.session.rollback() 
+            return {'message': str(e)}, 400
+
+    @auth_required('token', 'session')
+    def put(self, id):
+        args = requests_parser.parse_args()
+        print(args)
+
+        # try:
+        #     created_at = datetime.strptime(args['created_at'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        # except ValueError:
+        #     try:
+        #         created_at = datetime.strptime(args['created_at'], '%Y-%m-%dT%H:%M:%S.%f')
+        #     except ValueError:
+        #         created_at = datetime.strptime(args['created_at'], '%Y-%m-%d %H:%M:%S.%f')
+        # if args['created_at']:
+        #     date_formats = [ 
+        #         '%Y-%m-%dT%H:%M:%S.%fZ', 
+        #         '%Y-%m-%dT%H:%M:%S.%f', 
+        #         '%Y-%m-%d %H:%M:%S.%f', 
+        #         '%Y-%m-%dT%H:%M:%S', 
+        #         '%Y-%m-%d %H:%M:%S', 
+        #         ] 
+        #     created_at = None 
+        #     for date_format in date_formats: 
+        #         try: 
+        #             created_at = datetime.strptime(args['created_at'], date_format) 
+        #             break 
+        #         except ValueError: 
+        #             continue 
+                
+            # if created_at is None: 
+            #     return {'message': 'Invalid date format'}, 400
+            
+            # created_at = created_at.replace(tzinfo=timezone.utc)
+
+        created_at = datetime.now()
+        new_status = args['status']
+        request = Requests.query.get(id)
+        if not request:
+            return {'message': 'Request not found'}, 404
+        
+        request.ad_id = args['ad_id']
+        request.influencer_id = args['influencer_id']
+        request.created_at = created_at
+        # if args['created_at']:
+        #     request.created_at = created_at
+        # else:
+        #     request.created_at = datetime.now()
+
+        if args['negotiated_amount']:
+            request.negotiated_amount = args['negotiated_amount']
+
+        try:
+            if new_status == "Accepted":
+                requests = Requests.query.filter_by(ad_id = request.ad_id).all()
+                for req in requests:
+                    req.status = "Rejected"
+                request.status = "Accepted"
+            else:
+                request.status = new_status
+            db.session.commit()
+            return {'message': 'Request status updated'}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {'message': str(e)}, 400
+    
+
+api.add_resource(RequestsResource, '/requests', '/requests/<int:id>')
+
+class CheckRequest(Resource):
+    @auth_required('token', 'session')
+    def get(self):
+        ad_id = request.args.get('ad_id')
+        # influencer_id = request.args.get('influencer_id')
+
+        # Check if `ad_id` is missing
+        if not ad_id:
+            return {'message': 'ad_id is required'}, 400
+
+        # Case 1: Both `ad_id` and `influencer_id` are provided
+        # if influencer_id:
+        #     existing_request = Requests.query.filter_by(ad_id=ad_id, influencer_id=influencer_id).order_by(Requests.id.desc()).first()
+        #     if existing_request:
+        #         # Return status if request exists
+        #         if existing_request.status in ['Pending_I', 'Pending_S', 'Accepted_I', 'Accepted_S', 'Negotiation']:
+        #             return {'exists': True, 'status': existing_request.status}, 200
+        #         else:  # Status is 'Rejected'
+        #             return {'exists': False}, 200
+        #     else:
+        #         return {'exists': False}, 200
+
+        # Case 2: Only `ad_id` is provided
+        # else:
+        existing_requests = Requests.query.filter_by(ad_id=ad_id).all()
+        # Check if any accepted request exists
+        for req in existing_requests:
+            if req.status in ['Accepted_I', 'Accepted_S']:
+                return {'exists': True}, 200
+
+        # No accepted requests found
+        return {'exists': False}, 200
+
+
+# Add the resource to the API
+api.add_resource(CheckRequest, '/check-request')
+
+
+class MyCampaigns(Resource):
+    @auth_required('token', 'session')
+    @marshal_with(campaign_fields)
+    def get(self, id):
+        if not id:
+            return {'message': 'No Id provided'}, 404
+        
+        campaigns = Campaign.query.filter_by(sponsor_id=id).all()
+        return campaigns
+    
+
+api.add_resource(MyCampaigns, '/my-campaigns/<int:id>')
 
 class CampaignResource(Resource):
     @auth_required('token', 'session')
-    @marshal_with(campaign_fields)
     def get(self, id=None):
-        if id:
-            campaign = Campaign.query.get(id)
-            if not campaign:
-                return {'message': 'Campaign not found'}, 404
-            return campaign
-        else:
-            campaigns = Campaign.query.all()
-            # print(type(campaigns))
-            return campaigns
+        try:
+            # args = parser.parse_args()
+            include_details = request.args['include_details']
+
+            if id:
+                campaign = Campaign.query.options(joinedload(Campaign.sponsor)).filter_by(id=id).first()
+                if not campaign:
+                    return {'message': 'Campaign not found'}, 404
+                
+                campaign_data = marshal(campaign, campaign_fields)
+                campaign_data['ad_request_count'] = campaign.ad_requests.count()
+
+                if include_details:
+                    sponsor = User.query.filter_by(id=campaign.sponsor_id).first()
+                    sponsor_details = {
+                        # 'company_name': sponsor.company_name,
+                        'company_name': sponsor.name,
+                        'industry': sponsor.industry,
+                        'annual_revenue': sponsor.annual_revenue
+                    }
+                    campaign_data['sponsor_details'] = sponsor_details
+                return campaign_data, 200
+            
+            campaigns = Campaign.query.options(joinedload(Campaign.sponsor)).all()
+            detailed_campaigns = []
+            for campaign in campaigns:
+                campaign_data = marshal(campaign, campaign_fields)
+                campaign_data['ad_request_count'] = campaign.ad_requests.count()
+
+                if include_details:
+                    sponsor = User.query.filter_by(id=campaign.sponsor_id).first()
+                    sponsor_details = {
+                        'company_name': sponsor.name,
+                        'industry': sponsor.industry,
+                        'annual_revenue': sponsor.annual_revenue
+                    }
+                    campaign_data['sponsor_details'] = sponsor_details
+                detailed_campaigns.append(campaign_data)
+            # print(json.dumps(detailed_campaigns))
+            return detailed_campaigns, 200
+    
+        except Exception as e: 
+            print(f"Error in CampaignResource: {e}") 
+            return {'message': str(e)}, 500
+
+
+    # @marshal_with(campaign_fields)
+    # def get(self, id=None):
+    #     if id:
+    #         campaign = Campaign.query.get(id)
+    #         if not campaign:
+    #             return {'message': 'Campaign not found'}, 404
+    #         return campaign
+    #     else:
+    #         campaigns = Campaign.query.all()
+    #         # print(type(campaigns))
+    #         return campaigns
     
     @auth_required('token', 'session')
     def post(self):
@@ -138,8 +570,9 @@ api.add_resource(CampaignResource, '/campaigns', '/campaigns/<int:id>')
 class AdRequestResource(Resource):
     @auth_required('token', 'session')
     @marshal_with(ad_request_fields)
-    def get(self, id:None):
+    def get(self, id=None):
         if id:
+            # print("I get this", id)
             ad_request = AdRequest.query.get(id)
             if not ad_request:
                 return {'message': 'Ad Request not found'}, 404
@@ -147,6 +580,8 @@ class AdRequestResource(Resource):
         else:
             ad_requests = AdRequest.query.all()
             # print(type(campaigns))
+            # for ad_request in ad_requests:
+            #     ad_request.sponsor = ad_request.campaign.sponsor
             return ad_requests
     
     @auth_required('token', 'session')
@@ -186,7 +621,11 @@ class AdRequestResource(Resource):
         ad_request = AdRequest.query.get(id)
         if not ad_request:
             return {'message': 'Ad Request not found'}, 404
+        
+        # if args['influencer_id']:
+        #     ad_request.influencer_id = args['influencer_id']
 
+        # ad_request.status = args['status']
         ad_request.message = args['message']
         ad_request.requirements = args['requirements']
         ad_request.payment_amount = args['payment_amount']

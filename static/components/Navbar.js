@@ -10,7 +10,12 @@ const Navbar = {
             <router-link v-if="state.isLoggedIn && state.role === 'sponsor'" to='/dashboard/sponsor' class="nav-link">Dashboard</router-link>
             <router-link v-if="state.isLoggedIn && state.role === 'influencer'" to='/dashboard/influencer' class="nav-link">Dashboard</router-link>
 
-            <router-link v-if="state.isLoggedIn && state.role === 'sponsor'" to='/sponsor/campaigns' class="nav-link">Campaigns</router-link>
+            <router-link v-if="state.isLoggedIn && state.role === 'sponsor'" :to="'/sponsor/campaigns/' + state.userId" class="nav-link">Campaigns</router-link>
+
+            <router-link v-if="state.isLoggedIn && state.role === 'influencer'" :to="'/influencer/campaigns/' + state.userId" class="nav-link">Campaigns</router-link>
+
+            <router-link v-if="state.isLoggedIn && state.role === 'sponsor'" to='/sponsor/requests' class="nav-link">Requests</router-link>
+            <router-link v-if="state.isLoggedIn && state.role === 'influencer'" to='/influencer/requests' class="nav-link">Requests</router-link>
 
             <router-link v-if="state.isLoggedIn" to='/profile' class="nav-link">
                 <img src="/static/images/profile.png" alt="Profile" class="profile-icon">
@@ -20,6 +25,10 @@ const Navbar = {
         </div>
     </nav>
     `,
+
+    // <router-link v-if="state.isLoggedIn && state.role === 'sponsor'" to='/sponsor/campaigns' class="nav-link">Campaigns</router-link>
+
+    // <router-link v-if="state.isLoggedIn && state.role === 'influencer'" to='/influencer/campaigns' class="nav-link">Campaigns</router-link>
     methods: {
         logout() {
             localStorage.clear();
