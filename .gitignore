@@ -3,5 +3,5 @@
 .vscode
 instance
 celerybeat-schedule
-dumb.rdb
+dump.rdb
 __pycache__
