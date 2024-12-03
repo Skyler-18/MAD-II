@@ -2,28 +2,28 @@ const AddCampaign = {
     template: `<div>
     <h2>Add Campaign</h2>
     <form @submit.prevent="addCampaign">
-        <label for="topic">Name:</label>
+        <label for="name">Name:</label>
         <input type="text" id="name" v-model="name" required><br><br>
 
-        <label for="content">Description:</label>
+        <label for="description">Description:</label>
         <textarea id="description" v-model="description" required></textarea><br><br>
 
-        <label for="content">Start Date:</label>
+        <label for="startDate">Start Date:</label>
         <input type="date" id="startDate" v-model="start_date" required><br><br>
 
-        <label for="content">End Date:</label>
+        <label for="endDate">End Date:</label>
         <input type="date" id="endDate" v-model="end_date" required><br><br>
 
-        <label for="content">Budget:</label>
-        <textarea id="budget" v-model="budget" required></textarea><br><br>
+        <label for="budget">Budget:</label>
+        <input type="number" id="budget" v-model="budget" required><br><br>
 
-        <label for="content">Visibility:</label>
+        <label for="visibility">Visibility:</label>
         <select id="visibility" v-model="visibility" required>
             <option value='public'>Public</option>
             <option value='private'>Private</option>
         </select><br><br>
 
-        <label for="content">Goals:</label>
+        <label for="goals">Goals:</label>
         <textarea id="goals" v-model="goals" required></textarea><br><br>
 
         <button type="submit">Add Campaign</button>
@@ -57,6 +57,11 @@ const AddCampaign = {
                 return;
             }
 
+            if (isNaN(this.budget) || this.budget < 0) {
+                alert("Please enter a valid budget.");
+                return;
+            }
+
             try {
                 const campaignsResource = await fetch(window.location.origin + "/api/campaigns", {
                     method: "POST",
@@ -78,7 +83,8 @@ const AddCampaign = {
 
                 if (!campaignsResource.ok) {
                     const errorText = await campaignsResource.text();
-                    console.error(`Error adding campaign: ${errorText}`);
+                    alert(`Error adding campaign: ${errorText}`);
+                    return;
                 }
 
                 const data = await campaignsResource.json();
@@ -86,6 +92,7 @@ const AddCampaign = {
                 this.$router.push(`/sponsor/campaigns/${localStorage.getItem("id")}`);
             }
             catch(error) {
+                alert("Error adding campaign: " + error.message);
                 console.error("Error adding campaign:", error);
             }
         },

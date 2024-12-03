@@ -1,3 +1,7 @@
 .venv
-# .env
+.env
+.vscode
+instance
+celerybeat-schedule
+dumb.rdb
 __pycache__

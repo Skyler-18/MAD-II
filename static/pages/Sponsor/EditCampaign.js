@@ -3,22 +3,22 @@ const EditCampaign = {
     <div>
         <div>
             <form @submit.prevent="editCampaign">
-                <label for="topic">Name:</label>
+                <label for="name">Name:</label>
                 <input type="text" id="name" v-model="name" required><br><br>
-                <label for="content">Description:</label>
+                <label for="description">Description:</label>
                 <textarea id="description" v-model="description" required></textarea><br><br>
-                <label for="content">Start Date:</label>
+                <label for="startDate">Start Date:</label>
                 <input type="date" id="startDate" v-model="start_date" required><br><br>
-                <label for="content">End Date:</label>
+                <label for="endDate">End Date:</label>
                 <input type="date" id="endDate" v-model="end_date" required><br><br>
-                <label for="content">Budget:</label>
-                <textarea id="budget" v-model="budget" required></textarea><br><br>
-                <label for="content">Visibility:</label>       
-        <select id="visibility" v-model="visibility" required>
-            <option value='public'>Public</option>
-            <option value='private'>Private</option>
-        </select><br><br> 
-                <label for="content">Goals:</label>
+                <label for="budget">Budget:</label>
+                <input type="number" id="budget" v-model="budget" required><br><br>
+                <label for="visibility">Visibility:</label>       
+                <select id="visibility" v-model="visibility" required>
+                    <option value='public'>Public</option>
+                    <option value='private'>Private</option>
+                </select><br><br> 
+                <label for="goals">Goals:</label>
                 <textarea id="goals" v-model="goals" required></textarea><br><br>
                 <button type="submit">Save Changes</button>
             </form>
@@ -53,8 +53,7 @@ const EditCampaign = {
             this.visibility = campaignDetails.visibility;
             this.sponsor_id = campaignDetails.sponsor_id;
             this.goals = campaignDetails.goals;
-        }
-        else {
+        } else {
             console.error("API Error: ", await campaignResource.text());
         }
     },
@@ -74,6 +73,12 @@ const EditCampaign = {
                 alert("End date must be after today.");
                 return;
             }
+
+            if (isNaN(this.budget) || this.budget < 0) {
+                alert("Please enter a valid budget.");
+                return;
+            }
+
             try {
                 const campaignResource = await fetch(`${window.location.origin}/api/campaigns/${this.$route.params.id}`, {
                     method: "PUT",
@@ -95,14 +100,15 @@ const EditCampaign = {
 
                 if (!campaignResource.ok) {
                     const errorText = await campaignResource.text();
-                    console.error(`Error editing campaign:`, errorText);
+                    alert(`Error editing campaign: ${errorText}`);
+                    return;
                 }
 
                 const data = await campaignResource.json();
                 console.log("Campaign updated:", data);
                 this.$router.push(`/sponsor/campaigns/${localStorage.getItem("id")}`);
-            } 
-            catch (error) {
+            } catch (error) {
+                alert("Error saving campaign: " + error.message);
                 console.error("Error saving campaign:", error);
             }
         }

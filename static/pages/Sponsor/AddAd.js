@@ -9,8 +9,8 @@ const AddAd = {
                 <label for="content">Requirements:</label>        
                 <textarea id="requirements" v-model="requirements" required></textarea><br><br>
 
-                <label for="creatorId">Payment Amount:</label>        
-                <input type="integer" id="paymentAmount" v-model="payment_amount" required><br><br>
+                <label for="paymentAmount">Payment Amount:</label>        
+                <input type="number" id="paymentAmount" v-model="payment_amount" required><br><br>
 
                 <button type="submit">Add Ad</button> 
             </form>
@@ -27,6 +27,11 @@ const AddAd = {
 
     methods: {
         async addAd() {
+            if (isNaN(this.payment_amount) || this.payment_amount < 0) {
+                alert("Please enter a valid payment amount.");
+                return;
+            }
+
             try {
                 const adsResource = await fetch(window.location.origin + "/api/ad-requests", {
                     method: "POST",
@@ -43,13 +48,9 @@ const AddAd = {
                 });
 
                 if (!adsResource.ok) {
-                    // if (adsResource.status === 401) {
-                    //     // throw new Error("Unauthorized: Invalid authentication token");
-                    //     console.error()
-                    // }
-                    // throw new Error("Network response was not ok");
                     const errorText = await adsResource.text();
-                    console.error(`Error adding ad: ${errorText}`);
+                    alert(`Error adding ad: ${errorText}`);
+                    return;
                 }
 
                 const data = await adsResource.json();
@@ -57,6 +58,7 @@ const AddAd = {
                 this.$router.push(`/sponsor/campaign/${this.$route.params.id}`);
             } 
             catch(error) {
+                alert("Error adding ad: " + error.message);
                 console.error("Error adding ad:", error);
             }
         },

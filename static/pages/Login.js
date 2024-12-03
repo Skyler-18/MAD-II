@@ -44,6 +44,23 @@ const Login = {
                 console.log("Login Success: ", user);
 
                 localStorage.setItem("token", user.token);
+
+                const userRes = await fetch(`${window.location.origin}/api/users/${user.id}`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authentication-Token": localStorage.getItem("token"),
+                    },
+                });
+
+                // if (userRes.ok) {
+                    const userDetails = await userRes.json();
+
+                if (!userDetails.active) {
+                    alert("Your account is currently inactive. Contact admin for more details.");
+                    return;
+                }
+                // }
+
                 localStorage.setItem("id", user.id);
                 localStorage.setItem("email", user.email);
                 localStorage.setItem("role", user.role);
@@ -63,9 +80,9 @@ const Login = {
                         this.$router.push("/dashboard/influencer");
                         break;
                 }
-            }
-            else {
+            } else {
                 const errorText = await login.json();
+                alert("Incorrect email or password. Please try again.");
                 console.error("Login Failed: ", errorText);
             }
         },

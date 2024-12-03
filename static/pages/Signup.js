@@ -7,7 +7,7 @@ const Signup = {
         <h3 class="card-title text-center mb-4">Sign Up</h3>
 
         <!-- Step 1: Basic Info -->
-        <template v-if="step === 1">
+        <form v-if="step === 1" @submit.prevent="nextStep">
           <div class="form-group mb-3">
             <input v-model="email" type="email" class="form-control" placeholder="Email" required />
           </div>
@@ -17,17 +17,18 @@ const Signup = {
           </div>
 
           <div class="form-group mb-4">
-            <select v-model="role" class="form-control">
+            <select v-model="role" class="form-control" required>
+              <option value="" disabled>Select Role</option>
               <option value="sponsor">Sponsor</option>
               <option value="influencer">Influencer</option>
             </select>
           </div>
 
-          <button class="btn btn-primary w-100" @click="nextStep">Next</button>
-        </template>
+          <button type="submit" class="btn btn-primary w-100">Next</button>
+        </form>
 
         <!-- Step 2: Role-Specific Info -->
-        <template v-else-if="step === 2">
+        <form v-else-if="step === 2" @submit.prevent="submitInfo">
           <div v-if="role === 'sponsor'">
             <div class="form-group mb-3">
               <input v-model="name" type="text" class="form-control" placeholder="Company Name" required />
@@ -41,7 +42,7 @@ const Signup = {
           </div>
 
           <div v-else-if="role === 'influencer'">
-          <div class="form-group mb-3">
+            <div class="form-group mb-3">
               <input v-model="name" type="text" class="form-control" placeholder="Name" required />
             </div>
             <div class="form-group mb-3">
@@ -55,8 +56,8 @@ const Signup = {
             </div>
           </div>
 
-          <button class="btn btn-primary w-100" @click="submitInfo">Submit</button>
-        </template>
+          <button type="submit" class="btn btn-primary w-100">Submit</button>
+        </form>
       </div>
     </div>
   `,
@@ -64,7 +65,6 @@ const Signup = {
   data() {
     return {
       email: "",
-      // username: "",
       password: "",
       role: "",
       step: 1,
@@ -83,8 +83,7 @@ const Signup = {
     nextStep() {
       if (this.role) {
         this.step = 2;
-      } 
-      else {
+      } else {
         alert("Please select a role to continue.");
       }
     },
@@ -92,7 +91,6 @@ const Signup = {
     async submitInfo() {
       const user = {
         email: this.email,
-        // username: this.username,
         password: this.password,
         role: this.role,
       };
@@ -102,8 +100,7 @@ const Signup = {
         user.name = this.name;
         user.industry = this.industry;
         user.annual_revenue = this.annual_revenue;
-      } 
-      else if (this.role === "influencer") {
+      } else if (this.role === "influencer") {
         user.name = this.name;
         user.category = this.category;
         user.niche = this.niche;
@@ -122,10 +119,13 @@ const Signup = {
         const data = await signup.json();
         console.log(data);
         router.push("/login");
-      } 
-      else {
+      } else {
         const errorText = await signup.json();
-        console.error("SignUp Failed:", errorText);
+        if (errorText.message && errorText.message.includes("Email already registered")) {
+          alert("This email already exists.");
+        } else {
+          console.error("SignUp Failed:", errorText);
+        }
       }
     },
   },

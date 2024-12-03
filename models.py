@@ -3,9 +3,11 @@ from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
 from flask_security import Security, UserMixin, RoleMixin
 from flask_security.models import fsqla_v3
+from flask_caching import Cache
 
 db = SQLAlchemy()
 security = Security()
+cache = Cache()
 
 fsqla_v3.FsModels.set_db_info(db)
 
@@ -50,7 +52,7 @@ class Campaign(db.Model):
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     budget = db.Column(db.Float, nullable=False)
-    visibility = db.Column(db.String(50), default='public')
+    visibility = db.Column(db.String(16), default='public')
     sponsor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     goals = db.Column(db.Text, nullable=True)
 
@@ -74,8 +76,9 @@ class Requests(db.Model):
     negotiated_amount = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(50), default='Pending')
 
-class FlaggedContent(db.Model):
+class FlaggedCampaign(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    content_type = db.Column(db.String(50))
-    content_id = db.Column(db.Integer)
+    campaign_id = db.Column(db.Integer, db.ForeignKey('campaign.id'), nullable=False)
     reason = db.Column(db.Text)
+
+    campaign = db.relationship('Campaign', backref=db.backref('flagged', lazy=True))

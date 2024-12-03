@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
-from flask import request
+from flask import request, jsonify
 import json
 from flask_restful import Resource, Api, fields, marshal, reqparse, marshal_with
 from flask_security import auth_required
-from models import Requests, db, Campaign, AdRequest, User
+from models import Requests, db, Campaign, AdRequest, User, FlaggedCampaign, cache
 from sqlalchemy.orm import joinedload
 
 api = Api(prefix='/api')
@@ -94,12 +94,14 @@ user_fields = {
     # Influencer
     'category': fields.String, 
     'niche': fields.String, 
-    'followers': fields.Integer
+    'followers': fields.Integer,
+    'active': fields.Boolean
 }
 
 class UserResource(Resource):
     @auth_required('token', 'session')
     @marshal_with(user_fields)
+    # @cache.cached(timeout=5)
     def get(self, id=None):
         if id:
             user = User.query.options(joinedload(User.roles)).filter_by(id=id).first()
@@ -109,6 +111,37 @@ class UserResource(Resource):
         
         users = User.query.options(db.joinedload(User.roles)).all()
         return users
+
+    def put(self, id):
+        user = User.query.get(id)
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        data = request.get_json()
+
+        user.email = data.get('email', user.email)
+        if 'password' in data and data['password']:
+            user.password = data['password']
+        user.name = data.get('name', user.name)
+
+        # Sponsor fields
+        if user.roles[0].name == 'sponsor':
+            user.industry = data.get('industry', user.industry)
+            user.annual_revenue = data.get('annual_revenue', user.annual_revenue)
+
+        # Influencer fields
+        if user.roles[0].name == 'influencer':
+            user.category = data.get('category', user.category)
+            user.niche = data.get('niche', user.niche)
+            user.followers = data.get('followers', user.followers)
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'error': 'Failed to update user'}), 500
+
+        return {'message': 'Profile Edited'}, 200
 
 
 api.add_resource(UserResource, '/users', '/users/<int:id>')
@@ -434,8 +467,79 @@ class MyCampaigns(Resource):
 
 api.add_resource(MyCampaigns, '/my-campaigns/<int:id>')
 
+
+class FlagCampaign(Resource):
+    @auth_required('token', 'session')
+    def post(self, id):
+        campaign = Campaign.query.get(id)
+        if not campaign:
+            return {'message': 'Campaign not found'}, 404
+
+        data = request.get_json()
+        reason = data.get('reason')
+        if not reason:
+            return {'message': 'Reason is required'}, 400
+
+        flagged_campaign = FlaggedCampaign(campaign_id=id, reason=reason)
+        db.session.add(flagged_campaign)
+        db.session.commit()
+
+        return {'message': 'Campaign flagged successfully'}, 200
+
+    def delete(self, id):
+        campaign = Campaign.query.get(id)
+        if not campaign:
+            return {'message': 'Campaign not found'}, 404
+
+        flag = FlaggedCampaign.query.filter_by(campaign_id=id).first()
+        if not flag:
+            return {'message': 'Campaign not found'}, 404
+
+        db.session.delete(flag)
+        db.session.commit()
+        return {'message': 'Flag Removed'}, 200
+
+api.add_resource(FlagCampaign, '/flag-campaign/<int:id>')
+
+
+class CheckFlag(Resource):
+    @auth_required('token', 'session')
+    def get(self, id):
+        if not id:
+            return {'message': 'Provide Campaign ID'}, 404
+
+        is_flagged = FlaggedCampaign.query.filter_by(campaign_id=id).first()
+        if is_flagged is None:
+            return {'exists': False}, 200
+        else:
+            return {'exists': True, 'reason': is_flagged.reason}, 200
+        # return jsonify(is_flagged is not None), 200
+
+api.add_resource(CheckFlag, '/check-flag/<int:id>')
+
+
+class UnapprovedSponsors(Resource):
+    @auth_required('token', 'session')
+    def get(self):
+        users = User.query.all()
+
+        unapproved_sponsors = [sponsor for sponsor in users if not sponsor.active and any(role.name=='sponsor' for role in sponsor.roles)]
+        results = [
+            {
+                'id': sponsor.id,
+                'email': sponsor.email,
+            }
+            for sponsor in unapproved_sponsors
+        ]
+
+        return jsonify(results)
+
+api.add_resource(UnapprovedSponsors, '/unapproved-sponsors')
+
+
 class CampaignResource(Resource):
     @auth_required('token', 'session')
+    # @cache.cached(timeout=120)
     def get(self, id=None):
         try:
             # args = parser.parse_args()
@@ -570,6 +674,7 @@ api.add_resource(CampaignResource, '/campaigns', '/campaigns/<int:id>')
 class AdRequestResource(Resource):
     @auth_required('token', 'session')
     @marshal_with(ad_request_fields)
+    # @cache.cached(timeout=120)
     def get(self, id=None):
         if id:
             # print("I get this", id)

@@ -17,6 +17,10 @@ const Navbar = {
             <router-link v-if="state.isLoggedIn && state.role === 'sponsor'" to='/sponsor/requests' class="nav-link">Requests</router-link>
             <router-link v-if="state.isLoggedIn && state.role === 'influencer'" to='/influencer/requests' class="nav-link">Requests</router-link>
 
+            <router-link v-if="state.isLoggedIn && state.role === 'admin'" to='/users/all' class="nav-link">Users</router-link>
+
+            <router-link v-if="state.isLoggedIn && state.role === 'admin'" to='/campaigns/all' class="nav-link">Campaigns</router-link>
+
             <router-link v-if="state.isLoggedIn" to='/profile' class="nav-link">
                 <img src="/static/images/profile.png" alt="Profile" class="profile-icon">
             </router-link>

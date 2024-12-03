@@ -101,6 +101,48 @@ const InfluencerRequests = {
                 </template>
             </tbody>
         </table>
+
+        <!-- New Table for Accepted Requests -->
+<h3>Accepted Requests</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>S.No.</th>
+            <th>Campaign Name</th>
+            <th>Company Name</th>
+            <th>Industry</th>
+            <th>Annual Revenue</th>
+            <th>Created At</th>
+            <th>Details</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <template v-for="(acceptedRequest, index) in sortedAcceptedRequests" :key="acceptedRequest.id">
+            <!-- Main Row -->
+            <tr>
+                <td>{{ index + 1 }}</td>
+                <td>{{ acceptedRequest.campaign_name }}</td>
+                <td>{{ acceptedRequest.name }}</td>
+                <td>{{ acceptedRequest.industry }}</td>
+                <td>{{ acceptedRequest.annual_revenue }}</td>
+                <td>{{ formatDate(acceptedRequest.created_at) }}</td>
+                <td>
+                    <button class="btn btn-info" @click="toggleDetails(acceptedRequest)">Toggle Details</button>
+                </td>
+            </tr>
+            <!-- Details Row -->
+            <tr v-if="acceptedRequest.showDetails">
+                <td colspan="8">
+                    <p><strong>Message:</strong> {{ acceptedRequest.message }}</p>
+                    <p><strong>Requirements:</strong> {{ acceptedRequest.requirements }}</p>
+                    <p><strong>Payment Amount:</strong> {{ acceptedRequest.payment_amount }}</p>
+                </td>
+            </tr>
+        </template>
+    </tbody>
+</table>
+
     </div>
 `,
 
@@ -108,6 +150,7 @@ const InfluencerRequests = {
         return {
             sponsorRequests: [],
             myRequests: [],
+            acceptedRequests: [],
             showNegotiationBox: false,
         };
     },
@@ -123,7 +166,10 @@ computed: {
 
     sortedMyRequests() {
         return this.myRequests.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-    }
+    },
+    sortedAcceptedRequests() { 
+        return this.acceptedRequests.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); 
+    },
 },
     
     methods: {
@@ -262,7 +308,6 @@ computed: {
     async mounted() {
         try {
             const influencerId = localStorage.getItem("id");
-    
             const requestsResource = await fetch(`${window.location.origin}/api/requests-table/${influencerId}?user_type=influencer`, {
                 headers: {
                     "Authentication-Token": localStorage.getItem("token"),
@@ -285,6 +330,10 @@ computed: {
                     request.influencer_id == influencerId &&
                     (request.status === "Pending_S" || new Date(request.created_at).getTime() > last24Hours)
                 );
+    
+                this.acceptedRequests = data.filter(request =>
+                    ["Accepted_I", "Accepted_S"].includes(request.status) && request.influencer_id == influencerId
+                );
             } else {
                 const errorText = await requestsResource.text();
                 console.error("API Error:", errorText);
@@ -293,6 +342,7 @@ computed: {
             console.error("Fetch Error:", error);
         }
     },
+    
     
 
     // async mounted() {

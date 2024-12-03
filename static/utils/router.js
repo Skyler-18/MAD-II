@@ -5,6 +5,7 @@ import Logout from '../pages/Logout.js';
 import Profile from '../pages/Profile.js';
 import SponsorCampaignPage from '../pages/Sponsor/SponsorCampaignPage.js';
 import InfluencerDashboard from '../pages/Influencer/InfluencerDashboard.js';
+import SponsorDashboard from '../pages/Sponsor/SponsorDashboard.js';
 import AdminDashboard from '../pages/Admin/AdminDashboard.js'; // Ensure you have this import
 import Invalid from '../components/Invalid.js';
 import vuexStore from '../store/vuex-store.js';
@@ -18,6 +19,8 @@ import InfluencerCampaignPage from '../pages/Influencer/InfluencerCampaignPage.j
 import SponsorRequests from '../pages/Sponsor/SponsorRequests.js';
 import InfluencerRequests from '../pages/Influencer/InfluencerRequests.js';
 import SearchInfluencers from '../pages/Sponsor/SearchInfluencers.js';
+import AllUsers from '../pages/Admin/AllUsers.js'
+import AllCampaigns from '../pages/Admin/AllCampaigns.js'
 
 Vue.use(VueRouter);
 
@@ -29,7 +32,7 @@ const routes = [
     { path: '/profile', component: Profile, meta: { requiresAuth: true } },
 
     { path: '/dashboard/admin', component: AdminDashboard, meta: { requiresAuth: true } },
-    // { path: '/dashboard/sponsor', component: SponsorDashboard, meta: { requiresAuth: true } },
+    { path: '/dashboard/sponsor', component: SponsorDashboard, meta: { requiresAuth: true } },
     // {path: '/sponsor/campaigns', component: CampaignPage, meta: { requiresAuth: true } },
     { path: '/sponsor/campaigns/:id', component: SponsorCampaignPage, meta: { requiresAuth: true } },
 
@@ -53,6 +56,9 @@ const routes = [
     {path: '/:id/search/influencers', component: SearchInfluencers, meta: { requiresAuth: true }},
 
     {path: '/influencer/campaigns/:id', component: InfluencerCampaignPage, meta: { requiresAuth: true }},
+
+    {path: '/users/all', component: AllUsers, meta: { requiresAuth: true }},
+    {path: '/campaigns/all', component: AllCampaigns, meta: { requiresAuth: true }}
 ];
 
 const router = new VueRouter({
